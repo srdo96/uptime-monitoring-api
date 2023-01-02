@@ -1,0 +1,8 @@
+# Dependency directories
+node_modules
+
+# eslint
+.eslintrc.json
+
+# vscode workspace
+uptimeMonitoringApi.code-workspace
