@@ -13,8 +13,16 @@ const app = {};
 //     console.log(`error was ${err}`);
 // });
 
-data.read('test', 'newFile', (err, result) => {
-    console.log(err, result);
+// data.read('test', 'newFile', (err, result) => {
+//     console.log(err, result);
+// });
+
+data.update('test', 'newFile', { name: 'sua', lan: 'ar' }, (err) => {
+    console.log(err);
+});
+
+data.delete('test', 'newFile', (err) => {
+    console.log(err);
 });
 
 // create server
