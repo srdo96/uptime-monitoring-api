@@ -17,13 +17,13 @@ const app = {};
 //     console.log(err, result);
 // });
 
-data.update('test', 'newFile', { name: 'sua', lan: 'ar' }, (err) => {
-    console.log(err);
-});
+// data.update('test', 'newFile', { name: 'sua', lan: 'ar' }, (err) => {
+//     console.log(err);
+// });
 
-data.delete('test', 'newFile', (err) => {
-    console.log(err);
-});
+// data.delete('test', 'newFile', (err) => {
+//     console.log(err);
+// });
 
 // create server
 app.createServer = () => {
