@@ -1,5 +1,6 @@
 // dependencies
 const data = require('../../lib/data');
+const { hash } = require('../../helpers/utilities');
 // module scaffolding
 
 const handler = {};
@@ -32,6 +33,7 @@ handler._users.post = (requestProperties, callback) => {
         requestProperties.body.lastName.trim().length > 0
             ? requestProperties.body.lastName
             : null;
+
     const phoneNumber =
         typeof requestProperties.body.phoneNumber === 'string' &&
         requestProperties.body.phoneNumber.trim().length === 11
@@ -45,22 +47,29 @@ handler._users.post = (requestProperties, callback) => {
             : null;
 
     const tosAgreement =
-        typeof requestProperties.body.tosAgreement === 'string' &&
-        requestProperties.body.tosAgreement.trim().length > 0
+        typeof requestProperties.body.tosAgreement === 'boolean' &&
+        requestProperties.body.tosAgreement
             ? requestProperties.body.tosAgreement
             : false;
 
     if (firstName && lastName && phoneNumber && password && tosAgreement) {
         // make sure that user  doesn't already exists
-        data.read('users', phoneNumber, (err, user) => {
-            if (err) {
+        data.read('users', phoneNumber, (err1) => {
+            if (err1) {
                 const userObject = {
                     firstName,
                     lastName,
                     phoneNumber,
-                    password,
+                    password: hash(password),
                     tosAgreement,
                 };
+                data.create('users', phoneNumber, userObject, (err2) => {
+                    if (!err2) {
+                        callback(200, { message: 'User create successfully' });
+                    } else {
+                        callback(500, { error: 'could not create user' });
+                    }
+                });
             } else {
                 callback(500, {
                     error: 'There is a problem in server side',
