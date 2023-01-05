@@ -108,6 +108,7 @@ handler._users.post = (requestProperties, callback) => {
 };
 
 handler._users.put = (requestProperties, callback) => {
+    // check the phone-number validation
     const phoneNumber =
         typeof requestProperties.body.phoneNumber === 'string' &&
         requestProperties.body.phoneNumber.trim().length === 11
@@ -171,6 +172,31 @@ handler._users.put = (requestProperties, callback) => {
         });
     }
 };
-handler._users.delete = (requestProperties, callback) => {};
+handler._users.delete = (requestProperties, callback) => {
+    // check the phone-number validation
+    const phoneNumber =
+        typeof requestProperties.queryStringObject.phoneNumber === 'string' &&
+        requestProperties.queryStringObject.phoneNumber.trim().length === 11
+            ? requestProperties.queryStringObject.phoneNumber
+            : null;
+
+    if (phoneNumber) {
+        data.read('users', phoneNumber, (err1, userData) => {
+            if (!err1 && userData) {
+                data.delete('users', phoneNumber, (err2) => {
+                    if (!err2) {
+                        callback(200, { message: 'Delete Successfully' });
+                    } else {
+                        callback(500, { error: 'There was a server side error' });
+                    }
+                });
+            } else {
+                callback(500, { error: 'There was a server side error2' });
+            }
+        });
+    } else {
+        callback(400, { error: 'There is a problem in your request3' });
+    }
+};
 
 module.exports = handler;
