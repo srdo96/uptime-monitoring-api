@@ -22,5 +22,13 @@ utilities.hash = (str) => {
     return hashKey;
 };
 
+// random string
+utilities.createRandomString = (length) => {
+    const strLength = length;
+    // each byte encoded to hex is 2 characters. So the resulting string will be twice
+    const randomString = crypto.randomBytes(strLength / 2).toString('hex');
+    return randomString;
+};
+
 // module export
 module.exports = utilities;
