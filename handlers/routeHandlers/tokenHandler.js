@@ -17,13 +17,13 @@ handler.tokenHandler = (requestProperties, callback) => {
     }
 };
 
+// reuse function
+const isTokenValid = (tokenId) =>
+    typeof tokenId === 'string' && tokenId.trim().length === 22 ? tokenId : null;
+
 handler._token.get = (requestProperties, callback) => {
     // check the token id is valid
-    const tokenId =
-        typeof requestProperties.queryStringObject.id === 'string' &&
-        requestProperties.queryStringObject.id.trim().length === 22
-            ? requestProperties.queryStringObject.id
-            : null;
+    const tokenId = isTokenValid(requestProperties.queryStringObject.id);
 
     if (tokenId) {
         data.read('tokens', tokenId, (err1, tokenData) => {
@@ -87,7 +87,36 @@ handler._token.post = (requestProperties, callback) => {
     }
 };
 
-handler._token.put = (requestProperties, callback) => {};
+handler._token.put = (requestProperties, callback) => {
+    const tokenId = isTokenValid(requestProperties.body.tokenId);
+    const extend = !!(
+        typeof requestProperties.body.extend === 'boolean' && requestProperties.body.extend === true
+    );
+    
+    if (tokenId && extend) {
+        data.read('tokens', tokenId, (err1, tokenData) => {
+            const tokenObj = parseJSON(tokenData);
+
+            if (tokenObj.expires > Date.now()) {
+                tokenObj.expires = Date.now() + 60 * 60 * 1000;
+
+                // store token
+                data.update('tokens', tokenId, tokenObj, (err2) => {
+                    if (!err2) {
+                        callback(200, { message: 'Time extend' });
+                    } else {
+                        callback(500, { error: 'server side error' });
+                    }
+                });
+            } else {
+                callback(400, { error: 'Token already expired' });
+            }
+        });
+    } else {
+        callback(400, { error: 'Request not valid' });
+    }
+};
+
 handler._token.delete = (requestProperties, callback) => {};
 
 // module export
