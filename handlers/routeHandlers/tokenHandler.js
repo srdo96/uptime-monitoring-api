@@ -17,7 +17,27 @@ handler.tokenHandler = (requestProperties, callback) => {
     }
 };
 
-handler._token.get = (requestProperties, callback) => {};
+handler._token.get = (requestProperties, callback) => {
+    // check the token id is valid
+    const tokenId =
+        typeof requestProperties.queryStringObject.id === 'string' &&
+        requestProperties.queryStringObject.id.trim().length === 22
+            ? requestProperties.queryStringObject.id
+            : null;
+
+    if (tokenId) {
+        data.read('tokens', tokenId, (err1, tokenData) => {
+            const parsedTokenData = { ...parseJSON(tokenData) };
+            if (!err1 && tokenData) {
+                callback(200, parsedTokenData);
+            } else {
+                callback(404, { error: 'Token not found' });
+            }
+        });
+    } else {
+        callback(404, { error: 'Token was not found' });
+    }
+};
 
 handler._token.post = (requestProperties, callback) => {
     const phoneNumber =
