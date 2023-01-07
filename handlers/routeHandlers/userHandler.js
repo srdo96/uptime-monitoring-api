@@ -18,13 +18,13 @@ handler.userHandler = (requestProperties, callback) => {
 
 handler._users = {};
 
+// function reuse
+const isPhoneNumberValid = (phoneNumber) =>
+    typeof phoneNumber === 'string' && phoneNumber.trim().length === 11 ? phoneNumber : null;
+
 handler._users.get = (requestProperties, callback) => {
     // check the phone number is valid
-    const phoneNumber =
-        typeof requestProperties.queryStringObject.phoneNumber === 'string' &&
-        requestProperties.queryStringObject.phoneNumber.trim().length === 11
-            ? requestProperties.queryStringObject.phoneNumber
-            : null;
+    const phoneNumber = isPhoneNumberValid(requestProperties.queryStringObject.phoneNumber);
 
     if (phoneNumber) {
         // lookup the user
@@ -58,11 +58,7 @@ handler._users.post = (requestProperties, callback) => {
             ? requestProperties.body.lastName
             : null;
 
-    const phoneNumber =
-        typeof requestProperties.body.phoneNumber === 'string' &&
-        requestProperties.body.phoneNumber.trim().length === 11
-            ? requestProperties.body.phoneNumber
-            : null;
+    const phoneNumber = isPhoneNumberValid(requestProperties.queryStringObject.phoneNumber);
 
     const password =
         typeof requestProperties.body.password === 'string' &&
@@ -109,11 +105,7 @@ handler._users.post = (requestProperties, callback) => {
 
 handler._users.put = (requestProperties, callback) => {
     // check the phone-number validation
-    const phoneNumber =
-        typeof requestProperties.body.phoneNumber === 'string' &&
-        requestProperties.body.phoneNumber.trim().length === 11
-            ? requestProperties.body.phoneNumber
-            : null;
+    const phoneNumber = isPhoneNumberValid(requestProperties.queryStringObject.phoneNumber);
 
     if (phoneNumber) {
         const firstName =
@@ -133,6 +125,7 @@ handler._users.put = (requestProperties, callback) => {
             requestProperties.body.password.trim().length > 0
                 ? requestProperties.body.password
                 : null;
+
         if (firstName || lastName || password) {
             // lookup the user
             data.read('users', phoneNumber, (err1, userData) => {
@@ -174,11 +167,7 @@ handler._users.put = (requestProperties, callback) => {
 };
 handler._users.delete = (requestProperties, callback) => {
     // check the phone-number validation
-    const phoneNumber =
-        typeof requestProperties.queryStringObject.phoneNumber === 'string' &&
-        requestProperties.queryStringObject.phoneNumber.trim().length === 11
-            ? requestProperties.queryStringObject.phoneNumber
-            : null;
+    const phoneNumber = isPhoneNumberValid(requestProperties.queryStringObject.phoneNumber);
 
     if (phoneNumber) {
         data.read('users', phoneNumber, (err1, userData) => {
@@ -191,11 +180,11 @@ handler._users.delete = (requestProperties, callback) => {
                     }
                 });
             } else {
-                callback(500, { error: 'There was a server side error2' });
+                callback(500, { error: 'There was a server side error' });
             }
         });
     } else {
-        callback(400, { error: 'There is a problem in your request3' });
+        callback(400, { error: 'There is a problem in your request' });
     }
 };
 
