@@ -92,7 +92,7 @@ handler._token.put = (requestProperties, callback) => {
     const extend = !!(
         typeof requestProperties.body.extend === 'boolean' && requestProperties.body.extend === true
     );
-    
+
     if (tokenId && extend) {
         data.read('tokens', tokenId, (err1, tokenData) => {
             const tokenObj = parseJSON(tokenData);
@@ -117,7 +117,28 @@ handler._token.put = (requestProperties, callback) => {
     }
 };
 
-handler._token.delete = (requestProperties, callback) => {};
+handler._token.delete = (requestProperties, callback) => {
+    // check the token validation
+    const tokenId = isTokenValid(requestProperties.queryStringObject.id);
+
+    if (tokenId) {
+        data.read('tokens', tokenId, (err1, tokenData) => {
+            if (!err1 && tokenData) {
+                data.delete('tokens', tokenId, (err) => {
+                    if (!err) {
+                        callback(200, { message: 'Delete successfully' });
+                    } else {
+                        callback(500, { error: 'server side error' });
+                    }
+                });
+            } else {
+                callback(404, { error: 'Token not found' });
+            }
+        });
+    } else {
+        callback(400, { error: 'Request not valid' });
+    }
+};
 
 // module export
 module.exports = handler;
