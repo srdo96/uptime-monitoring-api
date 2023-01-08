@@ -27,6 +27,38 @@ const isPhoneNumberValid = (phoneNumber) =>
 const isTokenValid = (tokenId) =>
     typeof tokenId === 'string' && tokenId.trim().length === 22 ? tokenId : null;
 
+const requestPropertiesValidityCheck = (requestProperties) => {
+    const reqProtocol = requestProperties.body.protocol;
+    const protocol =
+        typeof reqProtocol === 'string' && ['http', 'https'].includes(reqProtocol.trim())
+            ? reqProtocol.trim()
+            : false;
+
+    const reqUrl = requestProperties.body.url;
+    const url = typeof reqUrl === 'string' && reqUrl.trim().length > 0 ? reqUrl.trim() : false;
+    const reqMethod = requestProperties.body.method;
+    const method =
+        typeof reqMethod === 'string' && ['get', 'post', 'put', 'delete'].includes(reqMethod.trim())
+            ? reqMethod.trim()
+            : false;
+
+    const reqSuccessCodes = requestProperties.body.successCodes;
+    const successCodes =
+        typeof reqSuccessCodes === 'object' && Array.isArray(reqSuccessCodes)
+            ? reqSuccessCodes
+            : false;
+
+    const reqTimeOutSec = requestProperties.body.timeOutSec;
+    const timeOutSec =
+        typeof reqTimeOutSec === 'number' &&
+        reqTimeOutSec % 1 === 0 &&
+        reqTimeOutSec >= 1 &&
+        reqTimeOutSec <= 5
+            ? reqTimeOutSec
+            : false;
+    return { protocol, url, method, successCodes, timeOutSec };
+};
+
 handler._check.get = (requestProperties, callback) => {
     // check the token id is valid
     const token = isTokenValid(requestProperties.queryStringObject.id);
@@ -54,34 +86,8 @@ handler._check.get = (requestProperties, callback) => {
 // _check POST
 handler._check.post = (requestProperties, callback) => {
     // validate inputs
-    const reqProtocol = requestProperties.body.protocol;
-    const protocol =
-        typeof reqProtocol === 'string' && ['http', 'https'].includes(reqProtocol)
-            ? reqProtocol
-            : false;
-
-    const reqUrl = requestProperties.body.url.trim();
-    const url = typeof reqUrl === 'string' && reqUrl.length > 0 ? reqUrl : false;
-    const reqMethod = requestProperties.body.method.trim();
-    const method =
-        typeof reqMethod === 'string' && ['get', 'post', 'put', 'delete'].includes(reqMethod)
-            ? reqMethod
-            : false;
-
-    const reqSuccessCodes = requestProperties.body.successCodes;
-    const successCodes =
-        typeof reqSuccessCodes === 'object' && Array.isArray(reqSuccessCodes)
-            ? reqSuccessCodes
-            : false;
-
-    const reqTimeOutSec = requestProperties.body.timeOutSec;
-    const timeOutSec =
-        typeof reqTimeOutSec === 'number' &&
-        reqTimeOutSec % 1 === 0 &&
-        reqTimeOutSec >= 1 &&
-        reqTimeOutSec <= 5
-            ? reqTimeOutSec
-            : false;
+    const { protocol, url, method, successCodes, timeOutSec } =
+        requestPropertiesValidityCheck(requestProperties);
 
     if (protocol && url && method && successCodes && timeOutSec) {
         const tokenId = isTokenValid(requestProperties.headersObject.token);
@@ -156,7 +162,58 @@ handler._check.post = (requestProperties, callback) => {
     }
 };
 
-handler._check.put = (requestProperties, callback) => {};
+handler._check.put = (requestProperties, callback) => {
+    const token = isTokenValid(requestProperties.body.id);
+    const { protocol, url, method, successCodes, timeOutSec } =
+        requestPropertiesValidityCheck(requestProperties);
+    if (token) {
+        if (protocol || url || method || successCodes || timeOutSec) {
+            data.read('checks', token, (err1, checkData) => {
+                if (!err1 && checkData) {
+                    const checkObject = parseJSON(checkData);
+                    const tokenId = isTokenValid(requestProperties.headersObject.token);
+
+                    tokenHandler._token.verify(tokenId, checkObject.userPhone, (tokenIsValid) => {
+                        if (tokenIsValid) {
+                            if (protocol) {
+                                checkObject.protocol = protocol;
+                            }
+                            if (url) {
+                                checkObject.url = url;
+                            }
+                            if (method) {
+                                checkObject.method = method;
+                            }
+                            if (successCodes) {
+                                checkObject.successCodes = successCodes;
+                            }
+                            if (timeOutSec) {
+                                checkObject.timeOutSec = timeOutSec;
+                            }
+
+                            // store the checkObject
+                            data.update('checks', token, checkObject, (err2) => {
+                                if (!err2) {
+                                    callback(200);
+                                } else {
+                                    callback(500, { error: 'Server side error' });
+                                }
+                            });
+                        } else {
+                            callback(403, { error: 'Authentication error' });
+                        }
+                    });
+                } else {
+                    callback(404, { error: 'Data not found' });
+                }
+            });
+        } else {
+            callback(400, { error: 'Empty field not allowed to update' });
+        }
+    } else {
+        callback(400, { error: 'Token not valid' });
+    }
+};
 handler._check.delete = (requestProperties, callback) => {};
 
 module.exports = handler;

@@ -143,6 +143,7 @@ handler._token.verify = (tokenId, phoneNumber, callback) => {
     data.read('tokens', tokenId, (err, tokenData) => {
         if (!err && tokenData) {
             const parsedToken = parseJSON(tokenData);
+
             if (parsedToken.phoneNumber === phoneNumber && parsedToken.expires > Date.now()) {
                 callback(true);
             } else {
