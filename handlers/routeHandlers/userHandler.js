@@ -66,7 +66,7 @@ handler._users.post = (requestProperties, callback) => {
             ? requestProperties.body.lastName
             : null;
 
-    const phoneNumber = isPhoneNumberValid(requestProperties.queryStringObject.phoneNumber);
+    const phoneNumber = isPhoneNumberValid(requestProperties.body.phoneNumber);
 
     const password =
         typeof requestProperties.body.password === 'string' &&
@@ -106,7 +106,7 @@ handler._users.post = (requestProperties, callback) => {
         });
     } else {
         callback(400, {
-            error: 'You have a problem in your request',
+            error: 'You have a problem in your requests',
         });
     }
 };

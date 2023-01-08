@@ -1,5 +1,4 @@
 // dependencies
-const fs = require('node:fs');
 const { hash, createRandomString, parseJSON } = require('../../helpers/utilities');
 const data = require('../../lib/data');
 
@@ -150,7 +149,7 @@ handler._token.verify = (tokenId, phoneNumber, callback) => {
                 callback(false);
             }
         } else {
-            callback(false);
+            callback('false a');
         }
     });
 };
