@@ -27,7 +27,29 @@ const isPhoneNumberValid = (phoneNumber) =>
 const isTokenValid = (tokenId) =>
     typeof tokenId === 'string' && tokenId.trim().length === 22 ? tokenId : null;
 
-handler._check.get = (requestProperties, callback) => {};
+handler._check.get = (requestProperties, callback) => {
+    // check the token id is valid
+    const token = isTokenValid(requestProperties.queryStringObject.id);
+
+    if (token) {
+        data.read('checks', token, (err1, checkData) => {
+            if (!err1 && checkData) {
+                const parsedTokenData = { ...parseJSON(checkData) };
+                tokenHandler._token.verify(token, parsedTokenData.phoneNumber, (tokenIsValid) => {
+                    if (tokenIsValid) {
+                        callback(200, parsedTokenData);
+                    } else {
+                        callback(403, 'Authentication failure');
+                    }
+                });
+            } else {
+                callback(404, { error: 'Token not found' });
+            }
+        });
+    } else {
+        callback(404, { error: 'Token was not found' });
+    }
+};
 
 // _check POST
 handler._check.post = (requestProperties, callback) => {
