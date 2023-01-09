@@ -100,9 +100,10 @@ handler._check.post = (requestProperties, callback) => {
                         tokenHandler._token.verify(tokenId, phoneNumber, (tokenIsValid) => {
                             if (tokenIsValid) {
                                 const userObject = parseJSON(userData);
+
                                 const userChecks =
                                     typeof userObject.checks === 'object' &&
-                                    Array.isArray(userObject)
+                                    Array.isArray(userObject.checks)
                                         ? userObject.checks
                                         : [];
 
@@ -214,6 +215,68 @@ handler._check.put = (requestProperties, callback) => {
         callback(400, { error: 'Token not valid' });
     }
 };
-handler._check.delete = (requestProperties, callback) => {};
+handler._check.delete = (requestProperties, callback) => {
+    const id = isTokenValid(requestProperties.queryStringObject.id);
+    if (id) {
+        data.read('checks', id, (err1, checkData) => {
+            if (!err1 && checkData) {
+                const parsedCheckData = { ...parseJSON(checkData) };
+                tokenHandler._token.verify(id, parsedCheckData.phoneNumber, (tokenIsValid) => {
+                    if (tokenIsValid) {
+                        // delete the check data
+                        data.delete('checks', parsedCheckData.id, (err2) => {
+                            if (!err2) {
+                                data.read('users', parsedCheckData.userPhone, (err3, userData) => {
+                                    if (!err3 && userData) {
+                                        const parsedUserData = parseJSON(userData);
+                                        const userChecks = Array.isArray(parsedUserData.checks)
+                                            ? parsedUserData.checks
+                                            : [];
+
+                                        // remove the deleted check id from user's list of checks
+                                        const index = userChecks.indexOf(id);
+                                        if (index > -1) {
+                                            userChecks.splice(index, 1);
+                                            // update user data
+                                            parsedUserData.checks = userChecks;
+                                            data.update(
+                                                'users',
+                                                parsedUserData.phoneNumber,
+                                                parsedUserData,
+                                                (err4) => {
+                                                    if (!err4) {
+                                                        callback(200, {
+                                                            message: 'Delete Successfully',
+                                                        });
+                                                    } else {
+                                                        callback(500, {
+                                                            error: 'server side error',
+                                                        });
+                                                    }
+                                                }
+                                            );
+                                        } else {
+                                            callback(500, { error: 'Id not found' });
+                                        }
+                                    } else {
+                                        callback(500, { error: 'server side error ', err3 });
+                                    }
+                                });
+                            } else {
+                                callback(500, { error: 'server side error', err2 });
+                            }
+                        });
+                    } else {
+                        callback(403, 'Authentication failure');
+                    }
+                });
+            } else {
+                callback(404, { error: 'Token not found', err1 });
+            }
+        });
+    } else {
+        callback(404, { error: 'Token was not found' });
+    }
+};
 
 module.exports = handler;
