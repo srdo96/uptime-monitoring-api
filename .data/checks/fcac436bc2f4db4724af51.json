@@ -1,0 +1,11 @@
+{
+  "id": "fcac436bc2f4db4724af51",
+  "userPhone": "01951119024",
+  "protocol": "https",
+  "url": "yahoo.com",
+  "method": "get",
+  "successCodes": [200, 201, 301],
+  "timeOutSec": 2,
+  "state": "up",
+  "lastChecked": 1673347384233
+}

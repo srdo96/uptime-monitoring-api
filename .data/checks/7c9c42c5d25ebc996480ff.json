@@ -1,9 +1,0 @@
-{
-  "id": "7c9c42c5d25ebc996480ff",
-  "userPhone": "01234567811",
-  "protocol": "https",
-  "url": "github.com",
-  "method": "get",
-  "successCodes": [200, 201],
-  "timeOutSec": 4
-}
